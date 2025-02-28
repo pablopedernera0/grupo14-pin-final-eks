@@ -36,7 +36,6 @@ jobs:
 
       # Paso 6: Ejecutar Terraform Apply solo cuando el plan sea exitoso y en la rama main
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve
 
       - name: Configure Kubernetes client
