@@ -2,29 +2,26 @@ provider "aws" {
   region = "sa-east-1"
 }
 
-resource "aws_iam_role" "eks_cluster_role" {
-  name = "eks-cluster-role"
+resource "aws_iam_role" "eks_cluster" {
+  name        = "eks-cluster-role"
+  description = "EKS Cluster Role"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow",
+        Action = "sts:AssumeRole"
         Principal = {
           Service = "eks.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
+        }
+        Effect = "Allow"
+        Sid      = ""
       }
     ]
   })
 }
 
 resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
-  role       = aws_iam_role.eks_cluster_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-}
-
-resource "aws_iam_role_policy_attachment" "eks_vpc_resource_controller_policy" {
-  role       = aws_iam_role.eks_cluster_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServiceRolePolicy"
+  role       = aws_iam_role.eks_cluster.name
 }
