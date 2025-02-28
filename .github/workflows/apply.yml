@@ -7,39 +7,37 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # Paso 1: Checkout del código fuente
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
+      # Paso 2: Configurar Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.8.4  # Versión de Terraform que deseas usar
+
+      # Paso 3: Configurar las credenciales de AWS (usando los secretos de GitHub)
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'us-east-1'
+          aws-region: sa-east-1  # Cambia la región según tus necesidades
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.4.6 # Cambia a la versión que necesites
-
-      - name: Validate Terraform
-        run: terraform validate
-
+      # Paso 4: Inicializar Terraform (esto configurará el backend S3)
       - name: Initialize Terraform
         run: terraform init
 
-      - name: Plan Terraform
-        run: terraform plan -out=tfplan          
+      # Paso 5: Ejecutar Terraform Plan y guardar el plan en un archivo
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -out=tfplan
 
-      - name: Apply Terraform
-        run: terraform apply -auto-approve tfplan
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'us-east-1'
+      # Paso 6: Ejecutar Terraform Apply solo cuando el plan sea exitoso y en la rama main
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve
 
       - name: Configure Kubernetes client
         uses: silverlyra/setup-aws-eks@v0.1
