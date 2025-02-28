@@ -1,0 +1,68 @@
+name: Create EKS Cluster
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'us-east-1'
+
+      - name: Initialize Terraform
+        uses: hashicorp/terraform-github-actions@v1.5.0
+        with:
+          terraform_version: '1.4.0'
+
+      - name: Apply Terraform Configuration
+        uses: hashicorp/terraform-github-actions@v1.5.0
+        with:
+          terraform_version: '1.4.0'
+          args: apply -auto-approve
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'us-east-1'
+
+      - name: Configure Kubernetes client
+        uses: silverlyra/setup-aws-eks@v0.1
+        with:
+          cluster: example-eks-cluster
+
+      - name: Install Helm
+        uses: azure/setup-helm@v2
+
+      - name: Add Helm Repositories
+        run: |
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+
+      - name: Install Nginx
+        run: |
+          kubectl create namespace nginx-ingress-sample
+          helm install my-nginx ingress-nginx/ingress-nginx \
+              --namespace nginx-ingress-sample \
+              --set controller.metrics.enabled=true \
+              --set-string controller.metrics.service.annotations."prometheus\.io/port"="10254" \
+              --set-string controller.metrics.service.annotations."prometheus\.io/scrape"="true"
+
+      - name: Install Prometheus and Grafana
+        run: |
+          helm install prometheus prometheus-community/prometheus
+          helm install grafana grafana/grafana
+
+      - name: Deploy Application
+        run: |
+          kubectl apply -f ./deployment.yaml
