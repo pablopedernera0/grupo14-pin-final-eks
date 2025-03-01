@@ -104,6 +104,7 @@ jobs:
           helm install prometheus prometheus-community/prometheus
           helm install grafana grafana/grafana
 
-      - name: Deploy Application
+      # Obtener la URL del servicio de Nginx y la contraseña de Grafana
+      - name: Get RUL Nginx Access
         run: |
-          kubectl apply -f ./deployment.yaml
+          kubectl get svc nginx-service -n nginx
