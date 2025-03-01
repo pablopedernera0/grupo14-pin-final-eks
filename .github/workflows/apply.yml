@@ -108,3 +108,4 @@ jobs:
       - name: Get RUL Nginx Access
         run: |
           kubectl get svc nginx-service -n nginx
+          kubectl get svc nginx-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
