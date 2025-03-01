@@ -59,7 +59,8 @@ jobs:
               --namespace nginx-ingress-sample \
               --set controller.metrics.enabled=true \
               --set-string controller.metrics.service.annotations."prometheus\.io/port"="10254" \
-              --set-string controller.metrics.service.annotations."prometheus\.io/scrape"="true"
+              --set-string controller.metrics.service.annotations."prometheus\.io/scrape"="true" \
+              --timeout 10m # Aumenta el tiempo de espera a 10 minutos
 
       - name: Install Prometheus and Grafana
         run: |
